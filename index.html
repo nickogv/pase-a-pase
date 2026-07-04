@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pase a Pase — fútbol para aprender español</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="contenedor">
+    <canvas id="campo" width="800" height="520"></canvas>
+
+    <div id="hud" class="oculto">
+      <span id="hud-nivel"></span>
+      <span id="hud-pases" class="es" data-en="passes left"></span>
+      <span id="hud-robos" class="es" data-en="steals"></span>
+      <span id="hud-objetivo" class="oculto"></span>
+    </div>
+
+    <div id="mensaje"></div>
+
+    <div id="menu" class="pantalla">
+      <h1>⚽ Pase a Pase</h1>
+      <p class="es" data-en="Learn Spanish, one pass at a time">Aprende español, pase a pase</p>
+      <button id="btn-jugar" class="grande es" data-en="Play">Jugar</button>
+      <button id="btn-progreso" class="es" data-en="My Spanish">Mi español</button>
+      <p class="pista-texto es" data-en="Hover over any Spanish text to see the translation">Pasa el cursor sobre cualquier texto en español para ver la traducción</p>
+    </div>
+
+    <div id="seleccion" class="pantalla oculto">
+      <h2 class="es" data-en="Choose a level">Elige un nivel</h2>
+      <div id="lista-niveles"></div>
+      <button id="btn-volver-menu" class="es" data-en="Back">Volver</button>
+    </div>
+
+    <div id="quiz" class="pantalla oculto">
+      <h2 class="es" data-en="Spanish quiz!">¡Quiz de español!</h2>
+      <p id="quiz-progreso"></p>
+      <p id="quiz-pregunta"></p>
+      <div id="quiz-opciones"></div>
+      <button id="btn-pista" class="es" data-en="Hint (costs 1 star)">Pista (1 ⭐)</button>
+    </div>
+
+    <div id="fin-nivel" class="pantalla oculto">
+      <h2 id="fin-titulo"></h2>
+      <p id="fin-detalle"></p>
+      <button id="btn-siguiente" class="grande es" data-en="Next level">Siguiente nivel</button>
+      <button id="btn-repetir" class="es" data-en="Retry">Repetir</button>
+      <button id="btn-fin-menu" class="es" data-en="Menu">Menú</button>
+    </div>
+
+    <div id="progreso" class="pantalla oculto">
+      <h2 class="es" data-en="My Spanish">Mi español</h2>
+      <p id="progreso-resumen"></p>
+      <div id="lista-progreso"></div>
+      <button id="btn-progreso-volver" class="es" data-en="Back">Volver</button>
+    </div>
+  </div>
+
+  <p id="controles" class="es" data-en="Mouse: click a teammate to pass · Keyboard/gamepad: arrows to aim, space to pass">
+    Ratón: clic en un compañero para pasar · Teclado/mando: flechas para apuntar, espacio para pasar
+  </p>
+
+  <script src="data/vocabulario.js"></script>
+  <script src="data/niveles.js"></script>
+  <script src="js/espanol.js"></script>
+  <script src="js/pases.js"></script>
+  <script src="js/campo.js"></script>
+  <script src="js/niveles.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

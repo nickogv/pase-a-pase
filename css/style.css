@@ -1,0 +1,202 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #17321d;
+  color: #f2f2f2;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 12px;
+}
+
+#contenedor {
+  position: relative;
+  width: min(800px, 96vw);
+}
+
+#campo {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Tooltip de traducción: pasa el cursor sobre un texto .es ---------- */
+.es { position: relative; }
+.es[data-en]:hover::after {
+  content: "🇬🇧 " attr(data-en);
+  position: absolute;
+  left: 50%;
+  bottom: 115%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #ffd94a;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 30;
+  pointer-events: none;
+}
+
+/* ---------- HUD ---------- */
+#hud {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+#hud span {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: auto;
+}
+#hud-objetivo { color: #ffd94a; }
+
+/* ---------- Mensajes flotantes ---------- */
+#mensaje {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  font-size: 30px;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  text-align: center;
+  max-width: 90%;
+  z-index: 20;
+}
+#mensaje.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+#mensaje.error { color: #ff8080; }
+#mensaje.exito { color: #9dff9d; }
+#mensaje.gol { color: #ffd94a; font-size: 46px; }
+#mensaje.ayuda { font-size: 18px; font-weight: 600; color: #ffffff; background: rgba(0,0,0,0.65); padding: 10px 16px; border-radius: 10px; }
+
+/* ---------- Pantallas superpuestas ---------- */
+.pantalla {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 30, 15, 0.92);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  overflow-y: auto;
+}
+.oculto { display: none !important; }
+
+h1 { font-size: 44px; }
+h2 { font-size: 28px; }
+
+button {
+  font-size: 17px;
+  font-weight: 700;
+  padding: 10px 26px;
+  border: none;
+  border-radius: 10px;
+  background: #2f6b3a;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+button:hover:not(:disabled) { background: #3d8a4b; transform: translateY(-1px); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.grande { font-size: 22px; padding: 14px 40px; background: #e8a020; color: #222; }
+button.grande:hover:not(:disabled) { background: #ffb62e; }
+
+.pista-texto { font-size: 13px; opacity: 0.75; max-width: 420px; }
+
+/* ---------- Selección de niveles ---------- */
+#lista-niveles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+}
+.nivel-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 8px;
+  background: #24502d;
+}
+.nivel-btn:hover:not(.bloqueado) { background: #2f6b3a; }
+.nivel-btn.bloqueado { opacity: 0.4; cursor: default; }
+.nivel-num { font-size: 24px; color: #ffd94a; }
+.nivel-nombre { font-size: 14px; }
+.nivel-estrellas { font-size: 16px; color: #ffd94a; letter-spacing: 2px; }
+
+/* ---------- Quiz ---------- */
+#quiz-pregunta { font-size: 24px; font-weight: 700; max-width: 90%; }
+#quiz-progreso { font-size: 14px; opacity: 0.8; }
+#quiz-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+.opcion { background: #1e4a68; font-size: 18px; }
+.opcion:hover:not(:disabled) { background: #2a6690; }
+.opcion.correcta { background: #2e9e46 !important; }
+.opcion.incorrecta { background: #c0392b !important; }
+.opcion.descartada { text-decoration: line-through; }
+#btn-pista { font-size: 14px; padding: 8px 18px; background: #6b5b1e; }
+#btn-pista:hover:not(:disabled) { background: #8a7527; }
+
+/* ---------- Fin de nivel ---------- */
+#fin-titulo { color: #ffd94a; }
+
+/* ---------- Progreso "Mi español" ---------- */
+#lista-progreso {
+  width: 100%;
+  max-width: 480px;
+  text-align: left;
+  overflow-y: auto;
+  max-height: 60%;
+  padding: 0 8px;
+}
+#lista-progreso h3 {
+  color: #ffd94a;
+  font-size: 16px;
+  margin: 12px 0 6px;
+  text-transform: capitalize;
+}
+.palabra-fila {
+  display: grid;
+  grid-template-columns: 24px 1fr 1fr;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.palabra-fila.dominada .palabra-es { color: #9dff9d; }
+.palabra-estado { color: #ffd94a; }
+.palabra-en { opacity: 0.7; font-style: italic; }
+
+#controles {
+  margin-top: 10px;
+  font-size: 13px;
+  opacity: 0.65;
+  text-align: center;
+}
