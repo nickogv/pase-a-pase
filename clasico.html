@@ -3,35 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pase a Pase 3D — fútbol de bloques para aprender español</title>
+  <title>Pase a Pase — fútbol para aprender español</title>
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    /* El campo 3D ocupa un lienzo panorámico; el resto de la interfaz se reutiliza. */
-    #campo { width: 100%; height: auto; aspect-ratio: 16 / 10; background: #0e2a17; }
-  </style>
 </head>
 <body>
   <div id="contenedor">
-    <canvas id="campo" width="960" height="600"></canvas>
+    <canvas id="campo" width="800" height="520"></canvas>
 
     <div id="hud" class="oculto">
       <span id="hud-nivel"></span>
-      <span id="hud-pases"></span>
-      <span id="hud-robos"></span>
+      <span id="hud-pases" class="es" data-en="passes left"></span>
+      <span id="hud-robos" class="es" data-en="steals"></span>
       <span id="hud-objetivo" class="oculto"></span>
     </div>
 
     <div id="mensaje"></div>
 
     <div id="menu" class="pantalla">
-      <h1>⚽ Pase a Pase <span class="badge3d">3D</span></h1>
+      <h1>⚽ Pase a Pase</h1>
       <p class="es" data-en="Learn Spanish, one pass at a time">Aprende español, pase a pase</p>
       <button id="btn-jugar" class="grande es" data-en="Play">Jugar</button>
       <button id="btn-progreso" class="es" data-en="My Spanish">Mi español</button>
-      <p class="pista-texto es" data-en="Drag from the ball to aim and set power; release to pass">
-        Arrastra desde el balón para apuntar y dar fuerza; suelta para pasar
-      </p>
-      <a class="enlace-modo" href="clasico.html">↩ Modo clásico 2D</a>
+      <p class="pista-texto es" data-en="Hover over any Spanish text to see the translation">Pasa el cursor sobre cualquier texto en español para ver la traducción</p>
+      <a class="enlace-modo" href="index.html">🎮 Probar el modo 3D de bloques</a>
     </div>
 
     <div id="seleccion" class="pantalla oculto">
@@ -64,24 +58,16 @@
     </div>
   </div>
 
-  <p id="controles" class="es" data-en="Mouse/touch: drag from the ball to aim · Keyboard/gamepad: arrows to aim &amp; power, space to pass">
-    Ratón/táctil: arrastra desde el balón para apuntar · Teclado/mando: flechas para apuntar y fuerza, espacio para pasar
+  <p id="controles" class="es" data-en="Mouse: click a teammate to pass · Keyboard/gamepad: arrows to aim, space to pass">
+    Ratón: clic en un compañero para pasar · Teclado/mando: flechas para apuntar, espacio para pasar
   </p>
 
-  <!-- Three.js sin paso de compilación: módulos ES desde CDN vía importmap. -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
-
-  <!-- Datos y motor de español (globales), reutilizados por el juego 3D. -->
   <script src="data/vocabulario.js"></script>
-  <script src="data/niveles3d.js"></script>
+  <script src="data/niveles.js"></script>
   <script src="js/espanol.js"></script>
-  <script type="module" src="js3d/juego3d.js"></script>
+  <script src="js/pases.js"></script>
+  <script src="js/campo.js"></script>
+  <script src="js/niveles.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

@@ -88,3 +88,5 @@ const Espanol = (() => {
 
   return { progreso, guardar, registrar, generarQuiz, palabrasDe, todas, buscar, estadoPalabra, barajar };
 })();
+// Expuesto en window para poder reutilizarlo desde los módulos ES del juego 3D.
+window.Espanol = Espanol;

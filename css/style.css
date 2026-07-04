@@ -200,3 +200,21 @@ button.grande:hover:not(:disabled) { background: #ffb62e; }
   opacity: 0.65;
   text-align: center;
 }
+
+/* ---------- Extras del modo 3D ---------- */
+.badge3d {
+  font-size: 20px;
+  background: #e8a020;
+  color: #222;
+  padding: 2px 10px;
+  border-radius: 8px;
+  vertical-align: middle;
+}
+.enlace-modo {
+  color: #ffd94a;
+  font-size: 14px;
+  text-decoration: none;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+.enlace-modo:hover { text-decoration: underline; }
