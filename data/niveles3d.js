@@ -215,5 +215,70 @@ window.DATA_NIVELES3D = [
     ],
     estrellas: { "5": 3, "7": 2 },
     ayuda: "La final: tres órdenes seguidas con rivales que se mueven. ¡Suerte!"
+  },
+  {
+    id: 13,
+    nombre: "El cono mágico",
+    temaEspanol: "preposiciones",
+    modo: "frase-companero",
+    aciertosNecesarios: 2,
+    pasesMax: 6, robosMax: 2,
+    // El cono es la referencia espacial: cada compañero está donde dice su
+    // etiqueta respecto al cono, así la posición ENSEÑA el significado.
+    conos: [[0, 0]],
+    equipo: [
+      [-24, 0],
+      [0, 10, "delante"],
+      [0, -10, "detrás"],
+      [10, 0, "al lado"]
+    ],
+    rivales: [{ pos: [-12, -8], tipo: "estatico" }],
+    porterias: [{ pos: [28, 0], ancho: 12 }],
+    frases: [
+      { es: "pasa al que está delante del cono", destino: "delante" },
+      { es: "pasa al que está detrás del cono", destino: "detrás" },
+      { es: "pasa al que está al lado del cono", destino: "al lado" }
+    ],
+    estrellas: { "4": 3, "5": 2 },
+    ayuda: "El cono naranja es tu referencia. Delante = hacia ti, detrás = al fondo."
+  },
+  {
+    id: 14,
+    nombre: "Las preguntas",
+    temaEspanol: "preguntas",
+    modo: "palabra-porteria",
+    pasesMax: 4, robosMax: 2,
+    equipo: [[-22, 0], [2, 0]],
+    rivales: [{ pos: [14, -10], tipo: "estatico" }],
+    porterias: [
+      { pos: [28, -12], ancho: 8, palabra: "dónde" },
+      { pos: [28, 0], ancho: 8, palabra: "cuándo" },
+      { pos: [28, 12], ancho: 8, palabra: "qué" }
+    ],
+    estrellas: { "2": 3, "3": 2 },
+    ayuda: "Palabras para preguntar: marca en la portería que traduce el objetivo."
+  },
+  {
+    id: 15,
+    nombre: "La entrevista",
+    temaEspanol: "preguntas",
+    modo: "palabra-companero",
+    aciertosNecesarios: 3,
+    pasesMax: 8, robosMax: 2,
+    equipo: [
+      [-24, 0],
+      [-4, -13, "cómo"],
+      [8, 0, "por qué"],
+      [-4, 13, "quién"]
+    ],
+    // Estáticos fuera de todos los carriles obligatorios: con 3 aciertos
+    // seguidos, un perseguidor acababa tapando orden y escape a la vez.
+    rivales: [
+      { pos: [2, 6], tipo: "estatico" },
+      { pos: [18, -9], tipo: "estatico" }
+    ],
+    porterias: [{ pos: [28, 0], ancho: 12 }],
+    estrellas: { "5": 3, "6": 2 },
+    ayuda: "Los periodistas preguntan en inglés: pasa al jugador con la palabra en español."
   }
 ];

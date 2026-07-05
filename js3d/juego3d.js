@@ -107,6 +107,7 @@ function cargarNivel(def) {
     equipo: def.equipo.map((e, i) => ({ x: e[0], z: e[1], palabra: e[2] || null, dorsal: i + 1 })),
     rivales: def.rivales.map(r => ({ x: r.pos[0], z: r.pos[1], tipo: r.tipo, radio: RADIO_RIVAL })),
     porterias: def.porterias.map(p => ({ x: p.pos[0], z: p.pos[1], ancho: p.ancho, palabra: p.palabra || null })),
+    conos: def.conos || [],
     portador: 0,
     balon: { x: 0, z: 0, y: 0, vx: 0, vz: 0, enVuelo: false, recorrido: 0 },
     pasesRestantes: def.pasesMax,
@@ -189,8 +190,9 @@ function actualizarPorterias() {
   const cerrada = esModoCompanero(N.def) && N.objetivo && N.objetivo.tipo !== "gol";
   const abierta = N.objetivo && N.objetivo.tipo === "gol";
   N.porterias.forEach((p, i) => {
-    const sel = N.def.modo === "palabra-porteria" && N.objetivo && p.palabra === N.objetivo.es;
-    Escena.estadoPorteria(i, { seleccionada: sel, cerrada, abierta });
+    // Nunca resaltar la portería correcta en palabra-porteria: leer la
+    // etiqueta en español ES el reto; el color regalaría la respuesta.
+    Escena.estadoPorteria(i, { seleccionada: false, cerrada, abierta });
   });
 }
 
@@ -214,6 +216,66 @@ function empezarNivel(def) {
   if (def.ayuda) mensaje(def.ayuda, "ayuda", 4500);
 }
 
+// ---------------- Aula de español (estudio libre por temas) ----------------
+const NOMBRES_TEMAS = {
+  "futbol-basico": "Fútbol básico",
+  "posiciones": "Posiciones y lados",
+  "numeros": "Números",
+  "jugadores": "Jugadores",
+  "preposiciones": "Preposiciones (sobre, debajo…)",
+  "preguntas": "Palabras para preguntar",
+  "frases": "Frases del míster"
+};
+
+function irAlAula() {
+  Juego.pantalla = "aula";
+  const lista = $("lista-aula");
+  lista.innerHTML = "";
+  for (const tema in window.DATA_VOCABULARIO.temas) {
+    const palabras = Espanol.palabrasDe(tema);
+    const dominadas = palabras.filter(w => Espanol.estadoPalabra(w.es).dominada).length;
+    const btn = document.createElement("button");
+    btn.className = "nivel-btn";
+    btn.innerHTML =
+      `<span class="nivel-nombre">${NOMBRES_TEMAS[tema] || tema}</span>` +
+      `<span class="nivel-estrellas">${dominadas}/${palabras.length} ✓</span>`;
+    btn.addEventListener("click", () => mostrarLeccionTema(tema));
+    lista.appendChild(btn);
+  }
+  mostrar("aula");
+}
+
+// Reutiliza la pantalla de lección para estudiar un tema completo del aula;
+// el botón lleva al quiz en lugar de al campo.
+let leccionAula = null;
+
+function mostrarLeccionTema(tema) {
+  Juego.pantalla = "leccion";
+  leccionAula = tema;
+  const cont = $("leccion-lista");
+  cont.innerHTML = "";
+  for (const w of Espanol.palabrasDe(tema)) {
+    const fila = document.createElement("div");
+    fila.className = "leccion-fila";
+    fila.innerHTML = `<button class="hablar" title="Escuchar en español">🔊</button>` +
+      `<span class="palabra-es">${w.es}</span><span class="palabra-en">${w.en}</span>`;
+    fila.querySelector(".hablar").addEventListener("click", () => hablar(w.es));
+    cont.appendChild(fila);
+  }
+  $("btn-leccion-jugar").textContent = "¡Al quiz! ✏️";
+  mostrar("leccion");
+}
+
+function continuarLeccion() {
+  if (leccionAula) {
+    const tema = leccionAula;
+    leccionAula = null;
+    iniciarQuiz(tema, "aula");
+  } else {
+    empezarNivel(nivelPendiente);
+  }
+}
+
 // ---------------- Lección previa al nivel ----------------
 let nivelPendiente = null;
 
@@ -228,6 +290,8 @@ function palabrasDelNivel(def) {
 function mostrarLeccion(def) {
   Juego.pantalla = "leccion";
   nivelPendiente = def;
+  leccionAula = null;
+  $("btn-leccion-jugar").textContent = "¡A jugar! ⚽";
   const cont = $("leccion-lista");
   cont.innerHTML = "";
   for (const es of palabrasDelNivel(def)) {
@@ -449,9 +513,11 @@ function perder(razon) {
 }
 
 // ---------------- Quiz entre niveles ----------------
-function iniciarQuiz(tema) {
+function iniciarQuiz(tema, origen) {
   Juego.pantalla = "quiz";
-  Juego.quiz = { preguntas: Espanol.generarQuiz(tema, 3), i: 0, aciertos: 0, respondida: false };
+  // Desde el aula el quiz es más largo (estudio); tras un nivel, corto (premio).
+  const n = origen === "aula" ? 5 : 3;
+  Juego.quiz = { preguntas: Espanol.generarQuiz(tema, n), i: 0, aciertos: 0, respondida: false, origen };
   mostrar("quiz");
   renderPregunta();
 }
@@ -514,6 +580,12 @@ function usarPista(preg) {
 
 function finDeNivel() {
   const r = Juego.resultado, q = Juego.quiz;
+  if (q.origen === "aula") {
+    // El quiz del aula no viene de ganar un nivel: vuelta al aula con resumen.
+    irAlAula();
+    mensaje(`Quiz: ${q.aciertos} de ${q.preguntas.length} · +${q.aciertos} ⭐`, "exito", 2500);
+    return;
+  }
   Juego.pantalla = "fin";
   $("fin-titulo").textContent = `¡Nivel superado! ${"★".repeat(r.estrellas)}`;
   $("fin-detalle").textContent = `Quiz de español: ${q.aciertos} de ${q.preguntas.length} · +${q.aciertos} ⭐ para pistas`;
@@ -535,12 +607,15 @@ function calcularAim(clientX, clientY) {
 
 canvas.addEventListener("pointerdown", e => {
   if (Juego.pantalla !== "juego" || Juego.nivel.balon.enVuelo || Juego.nivel.terminado) return;
-  canvas.setPointerCapture(e.pointerId);
+  // En móvil, sin esto el navegador convierte el arrastre en scroll y roba el gesto.
+  e.preventDefault();
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
   Juego.tecActivo = false;
   Juego.aim = calcularAim(e.clientX, e.clientY);
 });
 canvas.addEventListener("pointermove", e => {
   if (Juego.pantalla !== "juego" || !Juego.aim) return;
+  e.preventDefault();
   Juego.aim = calcularAim(e.clientX, e.clientY) || Juego.aim;
 });
 canvas.addEventListener("pointerup", e => {
@@ -548,6 +623,12 @@ canvas.addEventListener("pointerup", e => {
   const a = Juego.aim;
   if (a.potencia > 0.06) lanzar(a.dirX, a.dirZ, a.potencia);
   else { Juego.aim = null; Escena.ocultarFlecha(); }
+});
+// El sistema puede cancelar el gesto (llamada, notificación, scroll robado):
+// nunca dejar el apuntado a medias.
+canvas.addEventListener("pointercancel", () => {
+  Juego.aim = null;
+  Escena.ocultarFlecha();
 });
 
 // ---------------- Entrada: teclado / mando ----------------
@@ -578,8 +659,8 @@ document.addEventListener("keydown", e => {
   } else if (Juego.pantalla === "menu" && (e.key === " " || e.key === "Enter")) {
     e.preventDefault(); irASeleccion();
   } else if (Juego.pantalla === "leccion" && (e.key === " " || e.key === "Enter")) {
-    e.preventDefault(); empezarNivel(nivelPendiente);
-  } else if ((Juego.pantalla === "seleccion" || Juego.pantalla === "progreso" || Juego.pantalla === "leccion") && e.key === "Escape") {
+    e.preventDefault(); continuarLeccion();
+  } else if ((Juego.pantalla === "seleccion" || Juego.pantalla === "progreso" || Juego.pantalla === "leccion" || Juego.pantalla === "aula") && e.key === "Escape") {
     irAlMenu();
   }
 });
@@ -605,7 +686,9 @@ $("btn-siguiente").addEventListener("click", () => {
   iniciarNivel(NIVELES[idx + 1]);
 });
 $("btn-fin-menu").addEventListener("click", irAlMenu);
-$("btn-leccion-jugar").addEventListener("click", () => empezarNivel(nivelPendiente));
+$("btn-leccion-jugar").addEventListener("click", continuarLeccion);
+$("btn-aula").addEventListener("click", irAlAula);
+$("btn-aula-volver").addEventListener("click", irAlMenu);
 // El objetivo del HUD se puede escuchar en voz alta (clic en el 🔊).
 $("hud-objetivo").addEventListener("click", () => {
   const N = Juego.nivel;

@@ -43,6 +43,31 @@ window.DATA_VOCABULARIO = {
       {"es": "el árbitro", "en": "the referee"},
       {"es": "el entrenador", "en": "the coach"}
     ],
+    "preposiciones": [
+      {"es": "sobre", "en": "on / above"},
+      {"es": "debajo", "en": "under / below"},
+      {"es": "al lado", "en": "beside / next to"},
+      {"es": "delante", "en": "in front"},
+      {"es": "detrás", "en": "behind"},
+      {"es": "entre", "en": "between"},
+      {"es": "dentro", "en": "inside"},
+      {"es": "fuera", "en": "outside"},
+      {"es": "pasa al que está delante del cono", "en": "pass to the one in front of the cone", "tipo": "frase"},
+      {"es": "pasa al que está detrás del cono", "en": "pass to the one behind the cone", "tipo": "frase"},
+      {"es": "pasa al que está al lado del cono", "en": "pass to the one beside the cone", "tipo": "frase"}
+    ],
+    "preguntas": [
+      {"es": "qué", "en": "what"},
+      {"es": "dónde", "en": "where"},
+      {"es": "cuándo", "en": "when"},
+      {"es": "cómo", "en": "how"},
+      {"es": "por qué", "en": "why"},
+      {"es": "quién", "en": "who"},
+      {"es": "cuál", "en": "which"},
+      {"es": "cuánto", "en": "how much / how many"},
+      {"es": "¿dónde está el balón?", "en": "where is the ball?", "tipo": "frase"},
+      {"es": "¿quién marcó el gol?", "en": "who scored the goal?", "tipo": "frase"}
+    ],
     "frases": [
       {"es": "el delantero está desmarcado", "en": "the striker is open", "tipo": "frase"},
       {"es": "pasa el balón al portero", "en": "pass the ball to the goalkeeper", "tipo": "frase"},

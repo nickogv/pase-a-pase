@@ -46,10 +46,17 @@ export function init(canvas) {
 }
 
 function redimensionar(canvas) {
+  // En vertical (móvil) el lienzo se hace más alto y la cámara abre el ángulo
+  // para que el campo entero siga cabiendo en pantalla.
+  const vertical = window.innerHeight > window.innerWidth;
+  canvas.style.height = vertical
+    ? Math.round(canvas.clientWidth * 1.15) + "px"
+    : "";
   const w = canvas.clientWidth || canvas.width;
   const h = canvas.clientHeight || canvas.height;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
+  camera.fov = camera.aspect < 0.95 ? 70 : camera.aspect < 1.35 ? 56 : 45;
   camera.updateProjectionMatrix();
 }
 
@@ -238,6 +245,22 @@ export function construirNivel(estado) {
     wrap.position.set(p.x, 0, p.z);
     grupoNivel.add(wrap);
     mallas.porterias.push({ wrap, malla, etiqueta, ancho: p.ancho });
+  });
+
+  // Conos de referencia espacial (niveles de preposiciones).
+  (estado.conos || []).forEach(c => {
+    const cono = new THREE.Mesh(
+      new THREE.ConeGeometry(1.3, 2.6, 12),
+      new THREE.MeshLambertMaterial({ color: 0xff8c1a })
+    );
+    cono.position.set(c[0], 1.3, c[1]);
+    cono.castShadow = true;
+    const franja = new THREE.Mesh(
+      new THREE.ConeGeometry(0.85, 0.5, 12),
+      new THREE.MeshLambertMaterial({ color: 0xffffff })
+    );
+    franja.position.set(c[0], 1.9, c[1]);
+    grupoNivel.add(cono, franja);
   });
 
   // Balón

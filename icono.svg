@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#2a8339"/>
+  <rect x="40" y="90" width="432" height="332" rx="12" fill="none" stroke="#fff" stroke-width="14" opacity="0.85"/>
+  <line x1="256" y1="90" x2="256" y2="422" stroke="#fff" stroke-width="14" opacity="0.85"/>
+  <circle cx="256" cy="256" r="60" fill="none" stroke="#fff" stroke-width="14" opacity="0.85"/>
+  <circle cx="256" cy="256" r="46" fill="#fff"/>
+  <path d="M256 226l28 20-11 34h-34l-11-34z" fill="#222"/>
+  <text x="256" y="480" font-family="sans-serif" font-size="60" font-weight="bold" fill="#ffd94a" text-anchor="middle">¡PÁSALA!</text>
+</svg>

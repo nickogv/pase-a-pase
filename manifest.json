@@ -1,0 +1,19 @@
+{
+  "name": "Pase a Pase — fútbol para aprender español",
+  "short_name": "Pase a Pase",
+  "description": "Juego de fútbol de pases estilo Mini Soccer Star para aprender español",
+  "start_url": ".",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#17321d",
+  "theme_color": "#17321d",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icono.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

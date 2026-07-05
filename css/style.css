@@ -23,6 +23,11 @@ body {
   height: auto;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  /* Clave en móvil: sin esto, arrastrar para apuntar hace scroll y el
+     navegador cancela el gesto (el táctil "no funciona"). */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* ---------- Tooltip de traducción: pasa el cursor sobre un texto .es ---------- */
@@ -199,6 +204,38 @@ button.grande:hover:not(:disabled) { background: #ffb62e; }
   font-size: 13px;
   opacity: 0.65;
   text-align: center;
+}
+
+/* ---------- Aula de español ---------- */
+#lista-aula {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ---------- Móvil ---------- */
+@media (max-width: 640px) {
+  body { padding: 6px; }
+  #contenedor { width: 100vw; }
+  #campo { border-radius: 8px; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 22px; }
+  /* Botones con área táctil generosa (mínimo recomendado 44px) */
+  button { font-size: 16px; padding: 12px 22px; min-height: 44px; }
+  button.grande { font-size: 19px; padding: 14px 30px; }
+  #hud span { font-size: 12px; padding: 4px 9px; }
+  #mensaje { font-size: 22px; }
+  #mensaje.gol { font-size: 34px; }
+  #mensaje.ayuda { font-size: 15px; }
+  #controles { display: none; } /* instrucciones de ratón/teclado no aplican */
+  .pantalla { padding: 14px; gap: 10px; }
+  #quiz-pregunta { font-size: 19px; }
+  .leccion-fila .palabra-es { font-size: 15px; }
+  .leccion-fila .palabra-en { font-size: 13px; }
+  /* En táctil no hay hover: mostrar la traducción bajo el texto principal del menú */
+  #menu .pista-texto { font-size: 12px; }
 }
 
 /* ---------- Lección previa al nivel ---------- */
