@@ -266,6 +266,12 @@ button.grande:hover:not(:disabled) { background: #ffb62e; }
 }
 #hud-objetivo { cursor: pointer; }
 
+/* Foco de navegación con mando (Gamepad API) */
+.gp-foco {
+  outline: 3px solid #ffd94a;
+  outline-offset: 3px;
+}
+
 /* ---------- Extras del modo 3D ---------- */
 .badge3d {
   font-size: 20px;

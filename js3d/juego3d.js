@@ -665,6 +665,120 @@ document.addEventListener("keydown", e => {
   }
 });
 
+// ---------------- Entrada: mando de consola (Gamepad API) ----------------
+// PS4/PS5/Xbox por Bluetooth o USB, directo en el navegador, sin apps externas.
+// En el campo: stick izquierdo (o cruceta) apunta, mantener ✕ carga la fuerza
+// y al soltar sale el pase; △ lee el objetivo en voz alta; ○ vuelve al menú.
+// En los menús: stick/cruceta mueve el foco amarillo, ✕ pulsa, ○ atrás.
+const Mando = {
+  visto: false,          // ya se detectó un mando en esta sesión
+  prev: {},              // estado de botones del frame anterior (flancos)
+  cargando: false,       // ✕ mantenida: cargando potencia de pase
+  focoIdx: 0,
+  navCooldown: 0,        // anti-repetición al navegar con el stick
+  ultimaPantalla: null,
+  // La cámara es fija: estos vectores convierten el stick (espacio de
+  // pantalla) a dirección sobre el césped (espacio del mundo).
+  DER: { x: 0.76, z: 0.65 },   // "derecha de la pantalla" en el mundo
+  ARR: { x: 0.65, z: -0.76 }   // "arriba de la pantalla" en el mundo
+};
+
+// Fuente de mandos sustituible (los tests inyectan un mando falso).
+let obtenerPads = () => (navigator.getGamepads ? Array.from(navigator.getGamepads()) : []);
+window.__setPads = f => { obtenerPads = f; };
+
+window.addEventListener("gamepadconnected", e => {
+  Mando.visto = true;
+  mensaje("🎮 Mando conectado: apunta con el stick, ✕ para pasar", "exito", 3000);
+});
+window.addEventListener("gamepaddisconnected", () => {
+  Mando.cargando = false;
+  mensaje("🎮 Mando desconectado", "error");
+});
+
+function botonesVisibles() {
+  const p = document.querySelector(".pantalla:not(.oculto)");
+  return p ? [...p.querySelectorAll("button")].filter(b => !b.disabled && b.offsetParent !== null) : [];
+}
+
+function enfocarBoton(delta) {
+  const botones = botonesVisibles();
+  if (!botones.length) return;
+  const actual = botones.findIndex(b => b.classList.contains("gp-foco"));
+  botones.forEach(b => b.classList.remove("gp-foco"));
+  Mando.focoIdx = actual < 0 ? 0 : (actual + delta + botones.length) % botones.length;
+  const b = botones[Mando.focoIdx];
+  b.classList.add("gp-foco");
+  if (b.scrollIntoView) b.scrollIntoView({ block: "nearest" });
+}
+
+function pulsarFoco() {
+  const botones = botonesVisibles();
+  const b = botones.find(x => x.classList.contains("gp-foco"));
+  if (b) b.click();
+  else if (botones.length) enfocarBoton(0); // primera pulsación: solo enfocar
+}
+
+function sondearMando(dt) {
+  const pad = obtenerPads().find(p => p && p.connected);
+  if (!pad) return;
+  Mando.visto = true;
+
+  // Estado de botones de este frame (mapeo estándar: 0=✕ 1=○ 3=△ 12-15=cruceta)
+  const ahora = {};
+  [0, 1, 3, 12, 13, 14, 15].forEach(i => { ahora[i] = !!(pad.buttons[i] && pad.buttons[i].pressed); });
+  const flancoAbajo = i => ahora[i] && !Mando.prev[i];
+  const flancoArriba = i => !ahora[i] && Mando.prev[i];
+
+  // Cambio de pantalla: limpiar foco y estado de carga para no arrastrar nada.
+  if (Juego.pantalla !== Mando.ultimaPantalla) {
+    Mando.ultimaPantalla = Juego.pantalla;
+    Mando.cargando = false;
+    document.querySelectorAll(".gp-foco").forEach(b => b.classList.remove("gp-foco"));
+    if (Juego.pantalla !== "juego") enfocarBoton(0);
+  }
+
+  const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
+  const mag = Math.hypot(ax, ay);
+
+  if (Juego.pantalla === "juego") {
+    const N = Juego.nivel;
+    const puedeJugar = N && !N.balon.enVuelo && !N.terminado;
+    // Stick → dirección de pase en el mundo (respetando lo que ves en pantalla).
+    if (puedeJugar && mag > 0.3) {
+      const sx = ax / Math.max(1, mag), sy = ay / Math.max(1, mag);
+      const dirX = sx * Mando.DER.x + (-sy) * Mando.ARR.x;
+      const dirZ = sx * Mando.DER.z + (-sy) * Mando.ARR.z;
+      Juego.tecAngulo = Math.atan2(dirZ, dirX);
+      Juego.tecActivo = true;
+    }
+    // Cruceta: giro fino del ángulo.
+    if (puedeJugar && ahora[14]) { Juego.tecAngulo -= 2.4 * dt; Juego.tecActivo = true; }
+    if (puedeJugar && ahora[15]) { Juego.tecAngulo += 2.4 * dt; Juego.tecActivo = true; }
+    // ✕: mantener carga la potencia, soltar lanza (como estirar la flecha).
+    if (puedeJugar && flancoAbajo(0)) { Mando.cargando = true; Juego.tecPotencia = 0.15; Juego.tecActivo = true; }
+    if (Mando.cargando && ahora[0]) Juego.tecPotencia = Math.min(1, Juego.tecPotencia + 0.85 * dt);
+    if (flancoArriba(0) && Mando.cargando) {
+      Mando.cargando = false;
+      if (puedeJugar) lanzar(Math.cos(Juego.tecAngulo), Math.sin(Juego.tecAngulo), Juego.tecPotencia);
+    }
+    if (flancoAbajo(3) && N && N.objetivo) hablar(N.objetivo.frase || N.objetivo.es);
+    if (flancoAbajo(1)) irAlMenu();
+  } else {
+    // Menús: cruceta o stick mueven el foco, ✕ pulsa, ○ vuelve.
+    Mando.navCooldown -= dt;
+    const stickNav = Mando.navCooldown <= 0 && Math.abs(ay) > 0.55 ? Math.sign(ay) : 0;
+    if (flancoAbajo(13) || flancoAbajo(15) || stickNav > 0) { enfocarBoton(1); Mando.navCooldown = 0.25; }
+    if (flancoAbajo(12) || flancoAbajo(14) || stickNav < 0) { enfocarBoton(-1); Mando.navCooldown = 0.25; }
+    if (flancoAbajo(0)) pulsarFoco();
+    if (flancoAbajo(3) && Juego.pantalla === "quiz" && Juego.quiz) hablar(Juego.quiz.preguntas[Juego.quiz.i].palabra.es);
+    if (flancoAbajo(1) && Juego.pantalla !== "menu") irAlMenu();
+  }
+
+  Mando.prev = ahora;
+}
+window.__sondearMando = sondearMando; // gancho de pruebas (RAF se pausa en pestañas ocultas)
+
 // ---------------- Mensajes ----------------
 let mensajeTimer = null;
 function mensaje(texto, clase, ms) {
@@ -705,6 +819,7 @@ let ultimo = performance.now();
 function bucle(ahora) {
   const dt = Math.min(0.05, (ahora - ultimo) / 1000);
   ultimo = ahora;
+  sondearMando(dt);
   const N = Juego.nivel;
   if (Juego.pantalla === "juego" && N) {
     fisica(dt);
