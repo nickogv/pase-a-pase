@@ -49,7 +49,11 @@ window.DATA_VOCABULARIO = {
       {"es": "cuidado con el defensa", "en": "watch out for the defender", "tipo": "frase"},
       {"es": "un pase largo a la derecha", "en": "a long pass to the right", "tipo": "frase"},
       {"es": "tenemos poco tiempo", "en": "we have little time", "tipo": "frase"},
-      {"es": "¡qué buena jugada!", "en": "what a great play!", "tipo": "frase"}
+      {"es": "¡qué buena jugada!", "en": "what a great play!", "tipo": "frase"},
+      {"es": "el capitán pide el balón", "en": "the captain is calling for the ball", "tipo": "frase"},
+      {"es": "ahora por la izquierda", "en": "now down the left", "tipo": "frase"},
+      {"es": "vuelve atrás con calma", "en": "go back calmly", "tipo": "frase"},
+      {"es": "¡tira a la portería!", "en": "shoot at the goal!", "tipo": "frase"}
     ]
   }
 };

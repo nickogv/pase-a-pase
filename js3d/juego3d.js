@@ -127,19 +127,56 @@ function colocarBalon(N) {
   N.balon.vx = N.balon.vz = 0; N.balon.enVuelo = false; N.balon.recorrido = 0;
 }
 
+// Los modos "palabra-companero" y "frase-companero" comparten la regla de
+// "pasa al compañero pedido antes de poder rematar"; solo cambia cómo se
+// muestra el objetivo (palabra suelta en inglés vs. frase completa en español).
+function esModoCompanero(def) {
+  return def.modo === "palabra-companero" || def.modo === "frase-companero";
+}
+
+// ¿Está el carril recto entre dos puntos libre de rivales? Se usa al elegir
+// la siguiente orden: nunca pedir un pase que ya nace imposible (anti-frustración).
+function carrilDespejado(N, ax, az, bx, bz) {
+  for (const r of N.rivales) {
+    const dx = bx - ax, dz = bz - az;
+    const l2 = dx * dx + dz * dz;
+    let t = l2 ? ((r.x - ax) * dx + (r.z - az) * dz) / l2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    if (Math.hypot(r.x - (ax + t * dx), r.z - (az + t * dz)) < r.radio + 0.4) return false;
+  }
+  return true;
+}
+
 function elegirObjetivo(N) {
   const d = N.def;
   if (d.modo === "palabra-porteria") {
     const p = N.porterias[Math.floor(Math.random() * N.porterias.length)];
     N.objetivo = Object.assign({ tipo: "porteria" }, Espanol.buscar(p.palabra));
-  } else if (d.modo === "palabra-companero") {
+  } else if (esModoCompanero(d)) {
     if (N.aciertosPalabra >= (d.aciertosNecesarios || 2)) {
-      N.objetivo = { tipo: "gol", es: "la portería", en: "the goal" };
+      N.objetivo = { tipo: "gol", es: "la portería", en: "shoot at the goal!" };
+      if (d.modo === "frase-companero") N.objetivo.frase = "¡tira a la portería!";
+    } else if (d.modo === "frase-companero") {
+      // La orden llega como frase completa en español: interpretarla es el reto.
+      const anterior = N.objetivo ? N.objetivo.frase : null;
+      let cands = d.frases.filter(f => f.es !== anterior);
+      if (!cands.length) cands = d.frases;
+      // Preferir órdenes cumplibles ahora mismo (carril sin rivales).
+      const libres = cands.filter(f => {
+        const j = N.equipo.find(e => e.palabra === f.destino);
+        return j && carrilDespejado(N, N.balon.x, N.balon.z, j.x, j.z);
+      });
+      const pool = libres.length ? libres : cands;
+      const f = pool[Math.floor(Math.random() * pool.length)];
+      N.objetivo = { tipo: "companero", es: f.destino, frase: f.es, en: Espanol.buscar(f.es).en };
     } else {
       const anterior = N.objetivo ? N.objetivo.es : null;
       let cands = N.equipo.filter((j, i) => j.palabra && i !== N.portador && j.palabra !== anterior);
       if (!cands.length) cands = N.equipo.filter((j, i) => j.palabra && i !== N.portador);
-      const j = cands[Math.floor(Math.random() * cands.length)];
+      // Preferir objetivos con carril despejado desde el balón.
+      const libres = cands.filter(j => carrilDespejado(N, N.balon.x, N.balon.z, j.x, j.z));
+      const pool = libres.length ? libres : cands;
+      const j = pool[Math.floor(Math.random() * pool.length)];
       N.objetivo = Object.assign({ tipo: "companero" }, Espanol.buscar(j.palabra));
     }
   } else N.objetivo = null;
@@ -149,7 +186,7 @@ function elegirObjetivo(N) {
 function actualizarPorterias() {
   const N = Juego.nivel;
   if (!N) return;
-  const cerrada = N.def.modo === "palabra-companero" && N.objetivo && N.objetivo.tipo !== "gol";
+  const cerrada = esModoCompanero(N.def) && N.objetivo && N.objetivo.tipo !== "gol";
   const abierta = N.objetivo && N.objetivo.tipo === "gol";
   N.porterias.forEach((p, i) => {
     const sel = N.def.modo === "palabra-porteria" && N.objetivo && p.palabra === N.objetivo.es;
@@ -157,7 +194,14 @@ function actualizarPorterias() {
   });
 }
 
-function iniciarNivel(def) {
+// Antes de un nivel con contenido de español se muestra una lección breve
+// (presentación → práctica → quiz). "Repetir" la salta: ya la vieron.
+function iniciarNivel(def, opciones) {
+  if (def.modo !== "normal" && !(opciones && opciones.sinLeccion)) return mostrarLeccion(def);
+  empezarNivel(def);
+}
+
+function empezarNivel(def) {
   Juego.pantalla = "juego";
   Juego.resultado = null;
   Juego.nivel = cargarNivel(def);
@@ -170,6 +214,45 @@ function iniciarNivel(def) {
   if (def.ayuda) mensaje(def.ayuda, "ayuda", 4500);
 }
 
+// ---------------- Lección previa al nivel ----------------
+let nivelPendiente = null;
+
+function palabrasDelNivel(def) {
+  const lista = [];
+  if (def.modo === "palabra-porteria") def.porterias.forEach(p => p.palabra && lista.push(p.palabra));
+  else if (def.modo === "palabra-companero") def.equipo.forEach(e => e[2] && lista.push(e[2]));
+  else if (def.modo === "frase-companero") def.frases.forEach(f => lista.push(f.es));
+  return lista;
+}
+
+function mostrarLeccion(def) {
+  Juego.pantalla = "leccion";
+  nivelPendiente = def;
+  const cont = $("leccion-lista");
+  cont.innerHTML = "";
+  for (const es of palabrasDelNivel(def)) {
+    const w = Espanol.buscar(es);
+    const fila = document.createElement("div");
+    fila.className = "leccion-fila";
+    fila.innerHTML = `<button class="hablar" title="Escuchar en español">🔊</button>` +
+      `<span class="palabra-es">${w.es}</span><span class="palabra-en">${w.en}</span>`;
+    fila.querySelector(".hablar").addEventListener("click", () => hablar(w.es));
+    cont.appendChild(fila);
+  }
+  mostrar("leccion");
+}
+
+// Lee un texto en voz alta en español (si el navegador tiene síntesis de voz).
+function hablar(texto) {
+  try {
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = "es-ES";
+    u.rate = 0.95;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
 function actualizarHUD() {
   const N = Juego.nivel; if (!N) return;
   $("hud-nivel").textContent = `Nivel ${N.def.id}: ${N.def.nombre}`;
@@ -177,7 +260,15 @@ function actualizarHUD() {
   $("hud-robos").textContent = `Robos: ${N.robos}/${N.def.robosMax}`;
   const obj = $("hud-objetivo");
   if (N.objetivo) {
-    obj.textContent = `🎯 Pasa a: «${N.objetivo.en}»`;
+    if (N.objetivo.frase) {
+      // Modo frases: la orden se muestra EN ESPAÑOL (interpretarla es el juego);
+      // la traducción está en el tooltip y el 🔊 la lee en voz alta.
+      obj.textContent = `🎯 «${N.objetivo.frase}» 🔊`;
+      obj.title = "🇬🇧 " + N.objetivo.en;
+    } else {
+      obj.textContent = `🎯 Pasa a: «${N.objetivo.en}»`;
+      obj.title = "";
+    }
     obj.classList.remove("oculto");
   } else obj.classList.add("oculto");
 }
@@ -259,7 +350,7 @@ function procesarRecepcion(idx) {
   const N = Juego.nivel;
   N.balon.enVuelo = false;
   const receptor = N.equipo[idx];
-  if (N.def.modo === "palabra-companero" && N.objetivo && N.objetivo.tipo === "companero" && receptor.palabra) {
+  if (esModoCompanero(N.def) && N.objetivo && N.objetivo.tipo === "companero" && receptor.palabra) {
     if (receptor.palabra === N.objetivo.es) {
       Espanol.registrar(receptor.palabra, true);
       N.aciertosPalabra++;
@@ -291,7 +382,7 @@ function procesarGol(idx) {
     Espanol.registrar(N.objetivo.es, false);
     return procesarRobo(`¡Esa no! «${N.objetivo.en}» es «${N.objetivo.es}»`);
   }
-  if (N.def.modo === "palabra-companero" && N.objetivo && N.objetivo.tipo !== "gol") {
+  if (esModoCompanero(N.def) && N.objetivo && N.objetivo.tipo !== "gol") {
     return pararBalon("Aún no: sigue el objetivo 🎯");
   }
   if (N.def.modo === "palabra-porteria") Espanol.registrar(N.objetivo.es, true);
@@ -486,7 +577,9 @@ document.addEventListener("keydown", e => {
     } else if (e.key === "Escape") irAlMenu();
   } else if (Juego.pantalla === "menu" && (e.key === " " || e.key === "Enter")) {
     e.preventDefault(); irASeleccion();
-  } else if ((Juego.pantalla === "seleccion" || Juego.pantalla === "progreso") && e.key === "Escape") {
+  } else if (Juego.pantalla === "leccion" && (e.key === " " || e.key === "Enter")) {
+    e.preventDefault(); empezarNivel(nivelPendiente);
+  } else if ((Juego.pantalla === "seleccion" || Juego.pantalla === "progreso" || Juego.pantalla === "leccion") && e.key === "Escape") {
     irAlMenu();
   }
 });
@@ -506,12 +599,23 @@ $("btn-jugar").addEventListener("click", irASeleccion);
 $("btn-progreso").addEventListener("click", irAProgreso);
 $("btn-volver-menu").addEventListener("click", irAlMenu);
 $("btn-progreso-volver").addEventListener("click", irAlMenu);
-$("btn-repetir").addEventListener("click", () => iniciarNivel(Juego.resultado.def));
+$("btn-repetir").addEventListener("click", () => iniciarNivel(Juego.resultado.def, { sinLeccion: true }));
 $("btn-siguiente").addEventListener("click", () => {
   const idx = NIVELES.findIndex(d => d.id === Juego.resultado.def.id);
   iniciarNivel(NIVELES[idx + 1]);
 });
 $("btn-fin-menu").addEventListener("click", irAlMenu);
+$("btn-leccion-jugar").addEventListener("click", () => empezarNivel(nivelPendiente));
+// El objetivo del HUD se puede escuchar en voz alta (clic en el 🔊).
+$("hud-objetivo").addEventListener("click", () => {
+  const N = Juego.nivel;
+  if (N && N.objetivo) hablar(N.objetivo.frase || N.objetivo.es);
+});
+// La pregunta del quiz también se puede escuchar.
+$("quiz-pregunta").addEventListener("click", () => {
+  const q = Juego.quiz;
+  if (q && q.preguntas[q.i]) hablar(q.preguntas[q.i].palabra.es);
+});
 
 // ---------------- Bucle principal ----------------
 let ultimo = performance.now();
@@ -534,6 +638,13 @@ function bucle(ahora) {
 }
 
 // ---------------- Arranque ----------------
+// Ganchos para pruebas automatizadas (la pestaña oculta pausa requestAnimationFrame,
+// así que los tests avanzan la física con reloj manual).
+window.JuegoDbg = Juego;
+window.__fisica = fisica;
+
 Escena.init(canvas);
 irAlMenu();
 requestAnimationFrame(bucle);
+// Activa el botón Jugar del menú: el motor 3D ya está cargado.
+if (window.__juego3dListo) window.__juego3dListo();

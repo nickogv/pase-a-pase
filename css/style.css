@@ -201,6 +201,34 @@ button.grande:hover:not(:disabled) { background: #ffb62e; }
   text-align: center;
 }
 
+/* ---------- Lección previa al nivel ---------- */
+#leccion-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 460px;
+}
+.leccion-fila {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: left;
+}
+.leccion-fila .palabra-es { font-weight: 700; font-size: 17px; }
+.leccion-fila .palabra-en { opacity: 0.7; font-style: italic; font-size: 15px; }
+.leccion-fila .hablar {
+  padding: 4px 8px;
+  font-size: 16px;
+  background: #2f6b3a;
+  border-radius: 8px;
+}
+#hud-objetivo { cursor: pointer; }
+
 /* ---------- Extras del modo 3D ---------- */
 .badge3d {
   font-size: 20px;

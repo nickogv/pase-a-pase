@@ -62,11 +62,45 @@
       <div id="lista-progreso"></div>
       <button id="btn-progreso-volver" class="es" data-en="Back">Volver</button>
     </div>
+
+    <div id="leccion" class="pantalla oculto">
+      <h2 class="es" data-en="Words for this level">Vocabulario del nivel</h2>
+      <p id="leccion-tema" class="pista-texto es" data-en="Listen and read before playing — you'll need these words on the field">Escucha y lee antes de jugar: necesitarás estas palabras en el campo</p>
+      <div id="leccion-lista"></div>
+      <button id="btn-leccion-jugar" class="grande es" data-en="Let's play!">¡A jugar! ⚽</button>
+    </div>
   </div>
 
   <p id="controles" class="es" data-en="Mouse/touch: drag from the ball to aim · Keyboard/gamepad: arrows to aim &amp; power, space to pass">
     Ratón/táctil: arrastra desde el balón para apuntar · Teclado/mando: flechas para apuntar y fuerza, espacio para pasar
   </p>
+
+  <!-- Estado de carga del motor 3D: el botón Jugar se activa cuando el módulo
+       está listo. Evita el "botón muerto" con red lenta, sin internet o file://. -->
+  <script>
+  (function () {
+    var btn = document.getElementById('btn-jugar');
+    btn.disabled = true;
+    btn.textContent = 'Cargando…';
+    window.__juego3dListo = function () {
+      btn.disabled = false;
+      btn.textContent = 'Jugar';
+    };
+    function aviso(texto) {
+      btn.textContent = 'No disponible';
+      var p = document.querySelector('#menu .pista-texto');
+      p.innerHTML = '⚠️ ' + texto +
+        ' <a class="enlace-modo" href="clasico.html">Jugar al modo clásico 2D (funciona siempre)</a>';
+    }
+    if (location.protocol === 'file:') {
+      aviso('El modo 3D no puede abrirse con doble clic en el archivo: necesita un servidor web. Juega en línea en nickogv.github.io/pase-a-pase o lanza un servidor local.');
+    } else {
+      setTimeout(function () {
+        if (btn.disabled) aviso('El motor 3D no se pudo cargar (¿conexión al CDN bloqueada?).');
+      }, 12000);
+    }
+  })();
+  </script>
 
   <!-- Three.js sin paso de compilación: módulos ES desde CDN vía importmap. -->
   <script type="importmap">
