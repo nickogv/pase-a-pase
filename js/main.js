@@ -97,7 +97,7 @@ function actualizarHUD() {
   if (!N) return;
   $("hud-nivel").textContent = `Nivel ${N.def.id}: ${N.def.nombre}`;
   $("hud-pases").textContent = `Pases: ${N.pasesRestantes}`;
-  $("hud-robos").textContent = `Robos: ${N.robos}/${N.def.robosMax}`;
+  $("hud-robos").textContent = `Fallos: ${N.robos}/${N.def.robosMax}`;
   const obj = $("hud-objetivo");
   if (N.objetivo) {
     // El objetivo se muestra en inglés: la tarea del jugador es encontrar

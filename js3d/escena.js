@@ -119,6 +119,219 @@ function construirJugador(colorCamiseta) {
   return g;
 }
 
+function cil(rArr, rAb, h, color, opciones) {
+  const m = new THREE.Mesh(
+    new THREE.CylinderGeometry(rArr, rAb, h, 14),
+    new THREE.MeshLambertMaterial(Object.assign({ color }, opciones || {}))
+  );
+  m.castShadow = true;
+  m.receiveShadow = true;
+  return m;
+}
+
+function bola(r, color, escalaY) {
+  const m = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(r, 1),
+    new THREE.MeshLambertMaterial({ color, flatShading: true })
+  );
+  if (escalaY) m.scale.y = escalaY;
+  m.castShadow = true;
+  return m;
+}
+
+// ---------- Figuras voxel para personajes no humanos ----------
+// Los niveles pueden alinear animales, comida y objetos de casa en lugar de
+// futbolistas (equipo: [x, z, palabra, figura]). Cada builder devuelve un
+// Group con los pies en y=0, mirando hacia +x (la portería de ataque).
+function figPerro() {
+  const g = new THREE.Group();
+  const pelo = 0x8a5a2b, oscuro = 0x6e4520;
+  [[0.9, -0.5], [0.9, 0.5], [-0.9, -0.5], [-0.9, 0.5]].forEach(([x, z]) => {
+    const pata = caja(0.5, 1.0, 0.5, pelo); pata.position.set(x, 0.5, z); g.add(pata);
+  });
+  const cuerpo = caja(3.0, 1.4, 1.4, pelo); cuerpo.position.set(0, 1.7, 0);
+  const cabeza = caja(1.3, 1.3, 1.3, pelo); cabeza.position.set(2.0, 2.7, 0);
+  const hocico = caja(0.7, 0.55, 0.75, oscuro); hocico.position.set(2.9, 2.4, 0);
+  const orejaI = caja(0.3, 0.7, 0.35, oscuro); orejaI.position.set(1.7, 3.5, -0.45);
+  const orejaD = caja(0.3, 0.7, 0.35, oscuro); orejaD.position.set(1.7, 3.5, 0.45);
+  const cola = caja(1.0, 0.3, 0.3, oscuro); cola.position.set(-1.8, 2.4, 0); cola.rotation.z = 0.6;
+  g.add(cuerpo, cabeza, hocico, orejaI, orejaD, cola);
+  return g;
+}
+
+function figGato() {
+  const g = new THREE.Group();
+  const pelo = 0x8b8b95, rosa = 0xf0a0b0;
+  [[0.75, -0.4], [0.75, 0.4], [-0.75, -0.4], [-0.75, 0.4]].forEach(([x, z]) => {
+    const pata = caja(0.4, 0.8, 0.4, pelo); pata.position.set(x, 0.4, z); g.add(pata);
+  });
+  const cuerpo = caja(2.4, 1.1, 1.1, pelo); cuerpo.position.set(0, 1.35, 0);
+  const cabeza = caja(1.1, 1.1, 1.1, pelo); cabeza.position.set(1.6, 2.3, 0);
+  const nariz = caja(0.3, 0.25, 0.3, rosa); nariz.position.set(2.2, 2.1, 0);
+  const orejaI = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.6, 4), new THREE.MeshLambertMaterial({ color: pelo }));
+  orejaI.position.set(1.5, 3.1, -0.35); orejaI.castShadow = true;
+  const orejaD = orejaI.clone(); orejaD.position.z = 0.35;
+  const cola = caja(0.25, 1.4, 0.25, pelo); cola.position.set(-1.3, 2.1, 0); cola.rotation.z = -0.35;
+  g.add(cuerpo, cabeza, nariz, orejaI, orejaD, cola);
+  return g;
+}
+
+// Base compartida de ave: cuerpo, cabeza, pico, alas y cola con colores propios.
+function figAve(cCuerpo, cCabeza, cAla, cPico) {
+  const g = new THREE.Group();
+  [[-0.25], [0.25]].forEach(([z]) => {
+    const pata = caja(0.14, 0.8, 0.14, 0xd98c1a); pata.position.set(0, 0.4, z); g.add(pata);
+  });
+  const cuerpo = caja(1.5, 1.2, 1.2, cCuerpo); cuerpo.position.set(0, 1.5, 0);
+  const cabeza = caja(0.9, 0.9, 0.9, cCabeza); cabeza.position.set(0.85, 2.5, 0);
+  const pico = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 4), new THREE.MeshLambertMaterial({ color: cPico }));
+  pico.rotation.z = -Math.PI / 2; pico.position.set(1.6, 2.45, 0); pico.castShadow = true;
+  const alaI = caja(1.1, 0.18, 0.7, cAla); alaI.position.set(-0.1, 1.8, -0.85); alaI.rotation.x = 0.25;
+  const alaD = caja(1.1, 0.18, 0.7, cAla); alaD.position.set(-0.1, 1.8, 0.85); alaD.rotation.x = -0.25;
+  const colaAve = caja(0.8, 0.16, 0.5, cAla); colaAve.position.set(-1.0, 1.6, 0); colaAve.rotation.z = 0.35;
+  g.add(cuerpo, cabeza, pico, alaI, alaD, colaAve);
+  return g;
+}
+
+function figVasoAgua() {
+  const g = new THREE.Group();
+  const vaso = cil(1.0, 0.8, 2.8, 0xd8ecff, { transparent: true, opacity: 0.5 });
+  vaso.position.y = 1.4;
+  const agua = cil(0.8, 0.65, 1.9, 0x3f8fe0);
+  agua.position.y = 1.0;
+  g.add(agua, vaso);
+  return g;
+}
+
+function figLeche() {
+  const g = new THREE.Group();
+  const carton = caja(1.6, 2.8, 1.6, 0xf5f5f0); carton.position.y = 1.4;
+  const franja = caja(1.65, 0.7, 1.65, 0xd93636); franja.position.y = 1.7;
+  const pico = caja(1.15, 0.6, 1.15, 0xf5f5f0); pico.position.y = 3.05; pico.rotation.y = Math.PI / 4;
+  const tapa = caja(0.35, 0.35, 0.35, 0x2f6bd8); tapa.position.y = 3.5;
+  g.add(carton, franja, pico, tapa);
+  return g;
+}
+
+function figPan() {
+  const g = new THREE.Group();
+  const base = caja(2.8, 1.2, 1.5, 0xc98b45); base.position.y = 0.6;
+  const corteza = caja(2.5, 0.7, 1.25, 0xe0aa66); corteza.position.y = 1.5;
+  const corte1 = caja(0.12, 0.3, 1.3, 0xc98b45); corte1.position.set(-0.6, 1.85, 0);
+  const corte2 = corte1.clone(); corte2.position.x = 0.3;
+  g.add(base, corteza, corte1, corte2);
+  return g;
+}
+
+function figManzana() {
+  const g = new THREE.Group();
+  const fruta = bola(1.2, 0xd93636, 0.92); fruta.position.y = 1.15;
+  const rabito = caja(0.16, 0.7, 0.16, 0x6e4520); rabito.position.y = 2.35;
+  const hoja = caja(0.6, 0.12, 0.35, 0x2fae4e); hoja.position.set(0.35, 2.5, 0); hoja.rotation.z = 0.4;
+  g.add(fruta, rabito, hoja);
+  return g;
+}
+
+function figPlatano() {
+  const g = new THREE.Group();
+  const amarillo = 0xffd94a;
+  const centro = caja(1.9, 0.65, 0.65, amarillo); centro.position.y = 1.0;
+  const izq = caja(1.1, 0.6, 0.6, amarillo); izq.position.set(-1.25, 1.35, 0); izq.rotation.z = 0.55;
+  const der = caja(1.1, 0.6, 0.6, amarillo); der.position.set(1.25, 1.35, 0); der.rotation.z = -0.55;
+  const puntaI = caja(0.3, 0.3, 0.3, 0x6e4520); puntaI.position.set(-1.75, 1.7, 0);
+  const puntaD = caja(0.3, 0.3, 0.3, 0x6e4520); puntaD.position.set(1.75, 1.7, 0);
+  g.add(centro, izq, der, puntaI, puntaD);
+  return g;
+}
+
+function figTenedor() {
+  const g = new THREE.Group();
+  const metal = 0xb8bec9;
+  const mango = caja(0.4, 2.4, 0.4, metal); mango.position.y = 1.2;
+  const base = caja(1.2, 0.35, 0.45, metal); base.position.y = 2.55;
+  [-0.45, 0, 0.45].forEach(x => {
+    const diente = caja(0.2, 1.0, 0.3, metal); diente.position.set(x, 3.2, 0); g.add(diente);
+  });
+  g.add(mango, base);
+  return g;
+}
+
+function figCuchara() {
+  const g = new THREE.Group();
+  const metal = 0xb8bec9;
+  const mango = caja(0.4, 2.4, 0.4, metal); mango.position.y = 1.2;
+  const cazo = bola(0.85, metal, 0.55); cazo.position.y = 2.9; cazo.scale.z = 0.75;
+  g.add(mango, cazo);
+  return g;
+}
+
+function figPlato() {
+  const g = new THREE.Group();
+  const borde = cil(2.0, 1.5, 0.45, 0xf2f2f2); borde.position.y = 0.25;
+  const centro = cil(1.2, 1.2, 0.18, 0xdddddd); centro.position.y = 0.55;
+  g.add(borde, centro);
+  return g;
+}
+
+function figSilla() {
+  const g = new THREE.Group();
+  const madera = 0x9a6a33;
+  [[0.8, -0.8], [0.8, 0.8], [-0.8, -0.8], [-0.8, 0.8]].forEach(([x, z]) => {
+    const p = caja(0.3, 1.4, 0.3, madera); p.position.set(x, 0.7, z); g.add(p);
+  });
+  const asiento = caja(2.0, 0.3, 2.0, madera); asiento.position.y = 1.55;
+  const respaldo = caja(0.3, 2.2, 2.0, 0x8a5a2b); respaldo.position.set(-0.85, 2.7, 0);
+  g.add(asiento, respaldo);
+  return g;
+}
+
+function figMesa() {
+  const g = new THREE.Group();
+  const madera = 0x8a5a2b;
+  [[1.3, -0.9], [1.3, 0.9], [-1.3, -0.9], [-1.3, 0.9]].forEach(([x, z]) => {
+    const p = caja(0.35, 1.8, 0.35, madera); p.position.set(x, 0.9, z); g.add(p);
+  });
+  const tablero = caja(3.3, 0.35, 2.4, 0x9a6a33); tablero.position.y = 1.95;
+  g.add(tablero);
+  return g;
+}
+
+function figSofa() {
+  const g = new THREE.Group();
+  const tela = 0x3b6bb5, cojin = 0x5b8bd5;
+  const base = caja(3.4, 1.2, 1.9, tela); base.position.y = 0.6;
+  const respaldo = caja(3.4, 1.6, 0.6, tela); respaldo.position.set(0, 1.7, -0.75);
+  const brazoI = caja(0.5, 1.0, 1.9, tela); brazoI.position.set(-1.7, 1.5, 0);
+  const brazoD = caja(0.5, 1.0, 1.9, tela); brazoD.position.set(1.7, 1.5, 0);
+  const cojin1 = caja(1.45, 0.4, 1.3, cojin); cojin1.position.set(-0.78, 1.35, 0.2);
+  const cojin2 = caja(1.45, 0.4, 1.3, cojin); cojin2.position.set(0.78, 1.35, 0.2);
+  g.add(base, respaldo, brazoI, brazoD, cojin1, cojin2);
+  return g;
+}
+
+// Catálogo: clave = 4º elemento de la entrada de equipo en data/niveles3d.js.
+const FIGURAS = {
+  "perro": figPerro,
+  "gato": figGato,
+  "pajaro": () => figAve(0x3f8fe0, 0x2f6bd8, 0x7fb3ef, 0xff8c1a),
+  "loro": () => figAve(0x2fae4e, 0xd93636, 0xffd94a, 0x8b8b95),
+  "agua": figVasoAgua,
+  "leche": figLeche,
+  "pan": figPan,
+  "manzana": figManzana,
+  "platano": figPlatano,
+  "tenedor": figTenedor,
+  "cuchara": figCuchara,
+  "plato": figPlato,
+  "silla": figSilla,
+  "mesa": figMesa,
+  "sofa": figSofa,
+  "jugador-rojo": () => construirJugador(0xd93636),
+  "jugador-verde": () => construirJugador(0x2fae4e),
+  "jugador-naranja": () => construirJugador(0xff8c1a),
+  "jugador-morado": () => construirJugador(0x8e44ad)
+};
+
 function construirBalon() {
   // Balón "de bloques": icosaedro de baja resolución blanco con manchas oscuras.
   const g = new THREE.Group();
@@ -136,9 +349,9 @@ function construirBalon() {
 }
 
 // ---------- Portería 3D ----------
-function construirPorteria(ancho, resaltada) {
+function construirPorteria(ancho, colorBase) {
   const g = new THREE.Group();
-  const posteMat = new THREE.MeshLambertMaterial({ color: resaltada ? 0xffd94a : 0xffffff });
+  const posteMat = new THREE.MeshLambertMaterial({ color: colorBase || 0xffffff });
   const h = 7, med = ancho / 2;
   const poste = (z) => {
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.5, h, 0.5), posteMat);
@@ -195,11 +408,13 @@ export function construirNivel(estado) {
 
   estado.equipo.forEach((j, i) => {
     const wrap = new THREE.Group();
-    const fig = construirJugador(0x2f6bd8);
+    // Figura voxel personalizada (animal, comida, objeto…) o futbolista azul.
+    const fig = j.figura && FIGURAS[j.figura] ? FIGURAS[j.figura]() : construirJugador(0x2f6bd8);
     wrap.add(fig);
     if (j.palabra) {
       const et = construirEtiqueta(j.palabra, 3.4);
-      et.position.y = 6.2;
+      // Las figuras no humanas son más bajas: etiqueta más cerca del suelo.
+      et.position.y = j.figura && !j.figura.startsWith("jugador") ? 5.2 : 6.2;
       wrap.add(et);
     }
     // Aro de resaltado del portador (anillo en el suelo).
@@ -234,7 +449,7 @@ export function construirNivel(estado) {
 
   estado.porterias.forEach((p) => {
     const wrap = new THREE.Group();
-    const malla = construirPorteria(p.ancho, false);
+    const malla = construirPorteria(p.ancho, p.color);
     wrap.add(malla);
     let etiqueta = null;
     if (p.palabra) {
@@ -244,7 +459,7 @@ export function construirNivel(estado) {
     }
     wrap.position.set(p.x, 0, p.z);
     grupoNivel.add(wrap);
-    mallas.porterias.push({ wrap, malla, etiqueta, ancho: p.ancho });
+    mallas.porterias.push({ wrap, malla, etiqueta, ancho: p.ancho, colorBase: p.color || null });
   });
 
   // Conos de referencia espacial (niveles de preposiciones).
@@ -289,7 +504,8 @@ export function construirNivel(estado) {
 export function estadoPorteria(i, { seleccionada, cerrada, abierta }) {
   const p = mallas.porterias[i];
   if (!p) return;
-  const color = seleccionada || abierta ? 0xffd94a : 0xffffff;
+  // Las porterías de colores (niveles de "colores") conservan su tono base.
+  const color = seleccionada || abierta ? 0xffd94a : (p.colorBase || 0xffffff);
   p.malla.traverse(o => {
     if (o.material && o.material.color && !o.material.wireframe) o.material.color.setHex(color);
   });

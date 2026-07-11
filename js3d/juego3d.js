@@ -104,9 +104,9 @@ function irAProgreso() {
 function cargarNivel(def) {
   const N = {
     def,
-    equipo: def.equipo.map((e, i) => ({ x: e[0], z: e[1], palabra: e[2] || null, dorsal: i + 1 })),
-    rivales: def.rivales.map(r => ({ x: r.pos[0], z: r.pos[1], tipo: r.tipo, radio: RADIO_RIVAL })),
-    porterias: def.porterias.map(p => ({ x: p.pos[0], z: p.pos[1], ancho: p.ancho, palabra: p.palabra || null })),
+    equipo: def.equipo.map((e, i) => ({ x: e[0], z: e[1], palabra: e[2] || null, figura: e[3] || null, dorsal: i + 1 })),
+    rivales: (def.rivales || []).map(r => ({ x: r.pos[0], z: r.pos[1], tipo: r.tipo, radio: RADIO_RIVAL })),
+    porterias: def.porterias.map(p => ({ x: p.pos[0], z: p.pos[1], ancho: p.ancho, palabra: p.palabra || null, color: p.color || null })),
     conos: def.conos || [],
     portador: 0,
     balon: { x: 0, z: 0, y: 0, vx: 0, vz: 0, enVuelo: false, recorrido: 0 },
@@ -219,9 +219,12 @@ function empezarNivel(def) {
 // ---------------- Aula de español (estudio libre por temas) ----------------
 const NOMBRES_TEMAS = {
   "futbol-basico": "Fútbol básico",
-  "posiciones": "Posiciones y lados",
+  "posiciones": "Direcciones (adelante, atrás…)",
   "numeros": "Números",
-  "jugadores": "Jugadores",
+  "animales": "Animales",
+  "comida": "Comida",
+  "objetos": "Objetos de casa",
+  "colores": "Colores",
   "preposiciones": "Preposiciones (sobre, debajo…)",
   "preguntas": "Palabras para preguntar",
   "frases": "Frases del míster"
@@ -321,7 +324,7 @@ function actualizarHUD() {
   const N = Juego.nivel; if (!N) return;
   $("hud-nivel").textContent = `Nivel ${N.def.id}: ${N.def.nombre}`;
   $("hud-pases").textContent = `Pases: ${N.pasesRestantes}`;
-  $("hud-robos").textContent = `Robos: ${N.robos}/${N.def.robosMax}`;
+  $("hud-robos").textContent = `Fallos: ${N.robos}/${N.def.robosMax}`;
   const obj = $("hud-objetivo");
   if (N.objetivo) {
     if (N.objetivo.frase) {
